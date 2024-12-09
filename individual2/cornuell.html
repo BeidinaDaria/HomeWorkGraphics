@@ -52,9 +52,6 @@
         <label>Color B: <input type="number" id="objectB" step="0.1" min="0" max="1" value="0"></label>
         <button id="addObject">Add Object</button>
         <br>
-        <label>Scale: <input type="number" id="scale" step="0.1" value="1"></label>
-        <button id="updateScale">Update Scale</button>
-        <br>
         <button id="rotateLeft">Rotate Left</button>
         <button id="rotateRight">Rotate Right</button>
     </div>
@@ -110,7 +107,7 @@
         }
 
         // Трассировка лучей
-        function traceRay(origin, direction, depth = 0) {
+        function traceRay(origin, direction) {
             let closestObject = null;
             let closestDistance = Infinity;
             let intersectionPoint = null;
@@ -126,14 +123,30 @@
                     normal = norm;
                 }
             }
-
+            let eps=0.5;
             // Если пересечение найдено, рассчитать освещение
             if (closestObject) {
-                const lightDir = vectorNormalize(vectorSubtract(lightSource, intersectionPoint));
-                const diffuse = Math.max(0, vectorDot(normal, lightDir));
-                const color = vectorScale(closestObject.color, diffuse);
-
-                return `rgb(${Math.min(255, Math.floor(color.x * 255))}, ${Math.min(255, Math.floor(color.y * 255))}, ${Math.min(255, Math.floor(color.z * 255))})`;
+                //if (Math.abs(Math.round(intersectionPoint.x)-Math.round(direction.x))<eps && Math.abs(Math.round(intersectionPoint.y)-Math.round(direction.y))<eps || closestObject instanceof Cube && closestObject.wall){
+                    const lightDir = vectorNormalize(vectorSubtract(lightSource, intersectionPoint));
+                    const diffuse = Math.max(0, vectorDot(normal, lightDir));
+                    const color = vectorScale(closestObject.color, diffuse);
+                    if (closestObject instanceof Cube && closestObject.wall)
+                        return `rgb(${200-Math.floor(color.x * 255)}, ${200-Math.floor(color.y * 255)}, ${200-Math.floor(color.z * 255)})`;
+                    return `rgb(${Math.min(255, Math.floor(color.x * 255))}, ${Math.min(255, Math.floor(color.y * 255))}, ${Math.min(255, Math.floor(color.z * 255))})`;
+                /*}
+                else{
+                    for (const obj of objects) {
+                        const { point, dist, norm } = obj.intersect(origin, direction);
+                        if (Math.abs(Math.round(intersectionPoint.x) - Math.round(direction.x)) < eps && Math.abs(Math.round(intersectionPoint.y) - Math.round(direction.y)) < eps){
+                            const lightDir = vectorNormalize(vectorSubtract(lightSource, point));
+                            const diffuse = Math.max(0, vectorDot(norm, lightDir));
+                            const color = vectorScale(obj.color, diffuse);
+                            if (obj instanceof Cube && obj.wall)
+                                return `rgb(${200 - Math.floor(color.x * 255)}, ${200 - Math.floor(color.y * 255)}, ${200 - Math.floor(color.z * 255)})`;
+                            return `rgb(${Math.min(255, Math.floor(color.x * 255))}, ${Math.min(255, Math.floor(color.y * 255))}, ${Math.min(255, Math.floor(color.z * 255))})`;
+                        }
+                    }
+                }*/
             }
 
             // Фон
@@ -147,7 +160,7 @@
             const fov = Math.PI / 3;
             const aspectRatio = width / height;
             const scale = Math.tan(fov / 2);
-
+            ctx.clearRect(0,0, width, height);
             const cameraPos = { x: 0, y: 0, z: 0 };
 
             for (let y = 0; y < height; y++) {
@@ -204,6 +217,7 @@
                 this.center = center;
                 this.size = size;
                 this.color = color;
+                this.wall=false;
             }
 
             intersect(origin, direction) {
@@ -268,7 +282,8 @@
             ];
 
             // Создаем куб для комнаты (без пола)
-            objects.push(new Cube({ x: 0, y: 0, z: -5}, 10, wallColor[3]));
+            objects.push(new Cube({ x: 0, y: 0, z: -5 }, 10, wallColor[2]));
+            objects[0].wall=true;
         }
 
         // Управление
@@ -310,11 +325,11 @@
         });
 
         document.getElementById("rotateLeft").addEventListener("click", () => {
-            rotateScene(-0.1);
+            rotateScene(0.1);
             render();
         });
         document.getElementById("rotateRight").addEventListener("click", () => {
-            rotateScene(0.1);
+            rotateScene(-0.1);
             render();
         });
 
