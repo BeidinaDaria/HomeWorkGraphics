@@ -32,9 +32,9 @@
 <body>
     <h1>Cornell Box with Ray Tracing</h1>
     <div class="controls">
-        <label>Light Source X: <input type="number" id="lightX" value="100"></label>
-        <label>Light Source Y: <input type="number" id="lightY" value="200"></label>
-        <label>Light Source Z: <input type="number" id="lightZ" value="-200"></label>
+        <label>Light Source X: <input type="number" id="lightX" value="1"></label>
+        <label>Light Source Y: <input type="number" id="lightY" value="2"></label>
+        <label>Light Source Z: <input type="number" id="lightZ" value="-2"></label>
         <button id="updateLight">Update Light</button>
         <br>
         <label>Object Type:
@@ -66,7 +66,7 @@
 
         // Глобальные настройки сцены
         let objects = [];
-        let lightSource = { x: 100, y: 200, z: -200 };
+        let lightSource = { x: 1, y: 2, z: -2 };
         let rotationAngle = 0;
         let scale = 1;
 
@@ -123,30 +123,28 @@
                     normal = norm;
                 }
             }
-            let eps=0.5;
+            let eps=0.001;
             // Если пересечение найдено, рассчитать освещение
             if (closestObject) {
-                //if (Math.abs(Math.round(intersectionPoint.x)-Math.round(direction.x))<eps && Math.abs(Math.round(intersectionPoint.y)-Math.round(direction.y))<eps || closestObject instanceof Cube && closestObject.wall){
-                    const lightDir = vectorNormalize(vectorSubtract(lightSource, intersectionPoint));
-                    const diffuse = Math.max(0, vectorDot(normal, lightDir));
-                    const color = vectorScale(closestObject.color, diffuse);
-                    if (closestObject instanceof Cube && closestObject.wall)
-                        return `rgb(${200-Math.floor(color.x * 255)}, ${200-Math.floor(color.y * 255)}, ${200-Math.floor(color.z * 255)})`;
-                    return `rgb(${Math.min(255, Math.floor(color.x * 255))}, ${Math.min(255, Math.floor(color.y * 255))}, ${Math.min(255, Math.floor(color.z * 255))})`;
-                /*}
-                else{
-                    for (const obj of objects) {
-                        const { point, dist, norm } = obj.intersect(origin, direction);
-                        if (Math.abs(Math.round(intersectionPoint.x) - Math.round(direction.x)) < eps && Math.abs(Math.round(intersectionPoint.y) - Math.round(direction.y)) < eps){
-                            const lightDir = vectorNormalize(vectorSubtract(lightSource, point));
-                            const diffuse = Math.max(0, vectorDot(norm, lightDir));
-                            const color = vectorScale(obj.color, diffuse);
-                            if (obj instanceof Cube && obj.wall)
-                                return `rgb(${200 - Math.floor(color.x * 255)}, ${200 - Math.floor(color.y * 255)}, ${200 - Math.floor(color.z * 255)})`;
-                            return `rgb(${Math.min(255, Math.floor(color.x * 255))}, ${Math.min(255, Math.floor(color.y * 255))}, ${Math.min(255, Math.floor(color.z * 255))})`;
+                const lightDir = vectorNormalize(vectorSubtract(lightSource, intersectionPoint));
+                const diffuse = Math.max(0, vectorDot(normal, lightDir));
+                const color = vectorScale(closestObject.color, 50 * diffuse / (closestDistance * closestDistance));
+                // const color = vectorScale(closestObject.color, diffuse);
+                const lightLen=vectorLength(vectorSubtract(lightSource, intersectionPoint));
+                // Найти отсвет
+                for (const obj of objects) {
+                    const { point, dist, norm } = obj.intersect(vectorAdd(intersectionPoint, vectorScale(lightDir, eps)), lightDir);
+                    if (closestObject != obj && point){
+                        const Len = vectorLength(vectorSubtract(intersectionPoint, point));
+                        if (Len<lightLen){
+                            return "rgb(20, 20, 40)";
                         }
                     }
-                }*/
+                }
+                    
+                // if (closestObject instanceof Cube && closestObject.wall)
+                //     return `rgb(${200-Math.floor(color.x * 255)}, ${200-Math.floor(color.y * 255)}, ${200-Math.floor(color.z * 255)})`;
+                return `rgb(${Math.min(255, Math.floor(color.x * 255))}, ${Math.min(255, Math.floor(color.y * 255))}, ${Math.min(255, Math.floor(color.z * 255))})`;
             }
 
             // Фон
@@ -263,9 +261,9 @@
 
                 const point = vectorAdd(origin, vectorScale(direction, t));
                 const normal = vectorNormalize({
-                    x: Math.abs(point.x - min.x) < 0.001 ? -1 : (Math.abs(point.x - max.x) < 0.001 ? 1 : 0),
-                    y: Math.abs(point.y - min.y) < 0.001 ? -1 : (Math.abs(point.y - max.y) < 0.001 ? 1 : 0),
-                    z: Math.abs(point.z - min.z) < 0.001 ? -1 : (Math.abs(point.z - max.z) < 0.001 ? 1 : 0)
+                    x: Math.abs(point.x - min.x) < 0.001 ? 1 : (Math.abs(point.x - max.x) < 0.001 ? -1 : 0),
+                    y: Math.abs(point.y - min.y) < 0.001 ? 1 : (Math.abs(point.y - max.y) < 0.001 ? -1 : 0),
+                    z: Math.abs(point.z - min.z) < 0.001 ? 1 : (Math.abs(point.z - max.z) < 0.001 ? -1 : 0)
                 });
 
                 return { point, dist: t, norm: normal };
